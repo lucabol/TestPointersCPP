@@ -23,9 +23,9 @@ using boost::adaptors::transformed;
 using boost::adaptors::indirected;
 
 const int repetitions = 1000;
-const int bigBlock = 118;
-const int howMany = 10000;
-const int filterNo = 500;
+const int bigBlock = 174;
+const int howMany = 1000;
+const int filterNo = 100;
 
 typedef boost::chrono::process_cpu_clock the_clock;
 
@@ -41,12 +41,12 @@ struct timer {
 
 struct Record {
     int Id;
-    char k1[2];
-    char k2[2];
-    char k3[2];
-    char k4[2];
-    char k5[2];
-    char k6[2];
+    char k1[20];
+    char k2[20];
+    char k3[20];
+    char k4[20];
+    char k5[20];
+    char k6[20];
     char mem[bigBlock];
 	void Lock() {}
 	void Unlock() {}
