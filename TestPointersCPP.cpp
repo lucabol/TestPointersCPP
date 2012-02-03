@@ -1,19 +1,52 @@
 #include "stdafx.h"
 
-using namespace std;
+#include <boost\pool\pool.hpp>
+#include <boost\pool\singleton_pool.hpp>
+#include <loki\smartptr.h>
+#include <stlsoft\containers\pod_vector.hpp>
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/numeric.hpp>
+#include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/adaptor/indirected.hpp>
+#include <boost/chrono/process_cpu_clocks.hpp>
+#include <boost/chrono/time_point.hpp>
+#include <boost/chrono/chrono_io.hpp>
 
-#define bigBlock 20
-int howMany = 1000;
-int filterNo = 500;
+// This doesn't get defined when compiling Loki to a dll ....
+Loki::Private::TrackerArray* Loki::Private::pTrackerArray = 0;
+
+using namespace std;
+using stlsoft::pod_vector;
+using namespace boost::chrono;
+using boost::adaptors::filtered;
+using boost::adaptors::transformed;
+using boost::adaptors::indirected;
+
+const int repetitions = 1000;
+const int bigBlock = 118;
+const int howMany = 10000;
+const int filterNo = 500;
+
+typedef boost::chrono::process_cpu_clock the_clock;
+
+struct timer {
+	timer(): clock_(the_clock::now()) {}
+
+	the_clock::times elapsed() {
+		return (the_clock::now() - clock_).count();
+	}
+
+	the_clock::time_point clock_;
+};
 
 struct Record {
     int Id;
-    char k1[20];
-    char k2[20];
-    char k3[20];
-    char k4[20];
-    char k5[20];
-    char k6[20];
+    char k1[2];
+    char k2[2];
+    char k3[2];
+    char k4[2];
+    char k5[2];
+    char k6[2];
     char mem[bigBlock];
 	void Lock() {}
 	void Unlock() {}
@@ -39,38 +72,39 @@ struct Record {
 typedef Loki::SmartPtr<Record,
 				 Loki::RefCounted,
 				 Loki::DisallowConversion,
-			     Loki::AssertCheckStrict,
+			     Loki::AssertCheck,
 				 Loki::DefaultSPStorage,
 				 LOKI_DEFAULT_CONSTNESS> RecordPtr;
 
-template<class T>
-vector<T> filter(const vector<T>& v, function<bool (const T&)> f) {
-    vector<T> v1;
-    for_each(v.begin(), v.end(), [&](T r) { 
-              if(f(r)) v1.push_back(r);});
-    return v1;
+
+struct to_int {
+	typedef int result_type;
+	int operator() (const Record& r) const {
+		return r.Id;
+	};
+};
+
+function<bool (const Record&)> filter_f = [](const Record& r) {return r.Id < filterNo;};
+
+template <class Range>
+int accumulate_filter(const Range& r) {
+	return boost::accumulate(
+		r | filtered(filter_f) | transformed(to_int()),
+		0,
+		plus<int>()); 
 }
 
-template<class T>
-int sum(const vector<T>& v, function<int (const T&)> f) {
-    int sum = 0;
-    for_each(v.begin(), v.end(), [&](T r) { 
-              sum += f(r);});
-    return sum;
-}
+void record_init(Record& r, int i) {
 
-vector<Record*> filter(const vector<Record*>& v, function<bool (Record*)> f) {
-    vector<Record*> v1;
-    for_each(v.begin(), v.end(), [&](Record* r) { 
-              if(f(r)) v1.push_back(r);});
-    return v1;
-}
+    r.Id = i;
+    strcpy(r.k1, "0");
+    strcpy(r.k2, "0");
+    strcpy(r.k3, "0");
+    strcpy(r.k4, "0");
+    strcpy(r.k5, "0");
+    strcpy(r.k6, "0");
+    memset(r.mem, '-', bigBlock);
 
-int sum(const vector<Record*>& v, function<int (Record*)> f) {
-    int sum = 0;
-    for_each(v.begin(), v.end(), [&](Record* r) { 
-              sum += f(r);});
-    return sum;
 }
 
 int normal() {
@@ -78,21 +112,24 @@ int normal() {
     vector<Record> v;
     for (int i = 0; i < howMany; ++i) {
         Record r;
-        r.Id = i;
-        strcpy(r.k1, "0123456789");
-        strcpy(r.k2, "0123456789");
-        strcpy(r.k3, "0123456789");
-        strcpy(r.k4, "0123456789");
-        strcpy(r.k5, "0123456789");
-        strcpy(r.k6, "0123456789");
-        memset(r.mem, '-', bigBlock);
+		record_init(r, i);
         v.push_back(r);
     }
 
-    function<bool (const Record&)> f = [](const Record& r) {return r.Id < filterNo;};
-    function<int (const Record&)> s = [] (const Record& r) { return r.Id;};
+	return accumulate_filter(v);  
+}
 
-    return sum(filter(v,f),s);
+template<int size>
+int podVector() {
+
+    pod_vector<Record, stlsoft::allocator_selector<Record>::allocator_type, size> v;
+    for (int i = 0; i < howMany; ++i) {
+        Record r;
+		record_init(r, i);
+        v.push_back(r);
+    }
+
+	return accumulate_filter(v);  
 }
 
 typedef enum {Normal, Boost, Make, LokiPtr} WhichOne;
@@ -113,52 +150,23 @@ int pointers(WhichOne which) {
             r = make_shared<Record>();
 		else throw "This kind of pointer doesn't exist";
 
-        r->Id = i;
-        strcpy(r->k1, "0123456789");
-        strcpy(r->k2, "0123456789");
-        strcpy(r->k3, "0123456789");
-        strcpy(r->k4, "0123456789");
-        strcpy(r->k5, "0123456789");
-        strcpy(r->k6, "0123456789");
-        memset(r->mem, '-', bigBlock);
+		record_init(*r, i);
         v.push_back(r);
     }
 
-    function<bool (const shared_ptr<Record>&)> f = [](const shared_ptr<Record>& r) {return r->Id < filterNo;};
-    function<int (const shared_ptr<Record>&)> s = [] (const shared_ptr<Record>& r) { return r->Id;};
-    int ret = sum(filter(v,f), s);
-    return ret;
+	return accumulate_filter(v | indirected);
 }
 
 int lokipointers(WhichOne which) {
     vector<RecordPtr> v;
     for (int i = 0; i < howMany; ++i) {
-		Record* ptr;
-        RecordPtr r;  
-        if(which == Normal)
-            r = RecordPtr(new Record());
-        //else if(which == Boost)
-        //    r = RecordPtr((Record*)record_pool::malloc(), [](void* p) {record_pool::free(p);});
-        //else if(which == Make)
-        //    r = make_shared<Record>();
-		else throw "This kind of pointer doesn't exist";
-
-        r->Id = i;
-        strcpy(r->k1, "0123456789");
-        strcpy(r->k2, "0123456789");
-        strcpy(r->k3, "0123456789");
-        strcpy(r->k4, "0123456789");
-        strcpy(r->k5, "0123456789");
-        strcpy(r->k6, "0123456789");
-        memset(r->mem, '-', bigBlock);
+        RecordPtr r = RecordPtr(new Record());
+		record_init(*r, i);
         v.push_back(r);
     }
 
-    function<bool (const RecordPtr&)> f = [](const RecordPtr& r) {return static_cast<Record*>(Loki::GetImpl(r))->Id < filterNo;};
-    function<int (const RecordPtr&)> s = [] (const RecordPtr& r) { return static_cast<Record*>(Loki::GetImpl(r))->Id;};
-    int ret = sum(filter(v,f), s);
-    return ret;
-
+	auto ret = accumulate_filter(v | transformed(RecordPtr::GetPointer) | indirected);
+	return ret;
 }
 
 
@@ -172,54 +180,47 @@ int boostallocator(WhichOne which) {
             r = (Record*)p.malloc(); // memory freed at function exit
         else
             r = new Record; // oops, memory leak
-        r->Id = i;
-        strcpy(r->k1, "0123456789");
-        strcpy(r->k2, "0123456789");
-        strcpy(r->k3, "0123456789");
-        strcpy(r->k4, "0123456789");
-        strcpy(r->k5, "0123456789");
-        strcpy(r->k6, "0123456789");
-        memset(r->mem, '-', bigBlock);
+
+		record_init(*r, i);
         v.push_back(r);
     }
 
-    function<bool ( Record*)> f = [](Record* r) {return r->Id < filterNo;};
-    function<int ( Record*)> s = [] (Record* r) { return r->Id;};
-
-    return sum(filter(v,f), s);
+	return accumulate_filter(v | indirected);
 }
 
 int doTest(function<int ()> f) {
     int ret = 0;
-    const int repetitions = 1000;
-       clock_t start, finish;
-       clock_t duration;
 
-    start = clock();
+	timer timer;
     for(int i = 0; i < repetitions; ++i)
         ret += f();
-       finish = clock();
-    duration = (finish - start)  * 1000 / CLOCKS_PER_SEC;
+
+    auto el = timer.elapsed();
     std::cout << "value: " << ret << endl;
-	return duration;
+	return el.system + el.user;
 }
 
 int main()
 {
-       cout << "The size of the allocated object is " << sizeof(Record) << endl;
+       cout << "Size of object : " << sizeof(Record) << endl;
+       cout << "Num. of objects: " << howMany << endl;
 	   typedef tuple<clock_t, string> ResultType;
 	   vector<ResultType> durations;
 
+	   cout << endl;
 	   durations.push_back(make_tuple(doTest([]() { return normal();}), "Stack allocation"));
+	   durations.push_back(make_tuple(doTest([]() { return podVector<howMany*2>();}), "Stack allocation (pod_vector right size)"));
+	   durations.push_back(make_tuple(doTest([]() { return podVector<howMany/10>();}), "Stack allocation (pod_vector wrong size)"));
 	   durations.push_back(make_tuple(doTest([]() { return boostallocator(Normal);}), "Heap allocation (no free)"));
 	   durations.push_back(make_tuple(doTest([]() { return pointers(Normal);}), "Shared_ptr - constructor"));
 	   durations.push_back(make_tuple(doTest([]() { return pointers(Make);}), "Shared_ptr - make_shared"));
+	   // Loki throws an exception on main exit, not worried because I'm not going to use it anyhow
 	   durations.push_back(make_tuple(doTest([]() { return lokipointers(Normal);}), "Loki shared pointers"));
 	   durations.push_back(make_tuple(doTest([]() { return pointers(Boost);}), "Shared_ptr with pooled allocator"));
 	   durations.push_back(make_tuple(doTest([]() { return boostallocator(Boost);}), "Pooled allocator"));
 
-	   sort(durations.begin(), durations.end(), [](ResultType r1, ResultType r2) { return (get<0>(r1) < get<0>(r2));});
-	   for_each(durations.begin(), durations.end(), [](ResultType r) { cout << setw(40) << get<1>(r) << ": " << get<0>(r) << endl;}); 
+	   //sort(durations.begin(), durations.end(), [](ResultType r1, ResultType r2) { return (get<0>(r1) < get<0>(r2));});
+	   for_each(durations.begin(), durations.end(), [](ResultType r) { cout /*<< setw(40) << get<1>(r) << ": " */<< get<0>(r) << endl;}); 
        return 0;
 }
 

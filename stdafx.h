@@ -5,6 +5,9 @@
 
 #pragma once
 
+#define _CRT_SECURE_NO_WARNINGS
+#pragma warning (disable: 4345)
+
 #include "targetver.h"
 
 #include <vector>
@@ -17,9 +20,6 @@
 #include <functional>
 #include <algorithm>
 #include <tuple>
-#include <boost\pool\pool.hpp>
-#include <boost\pool\singleton_pool.hpp>
-#include <loki\smartptr.h>
 
 
 
