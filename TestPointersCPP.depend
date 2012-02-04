@@ -1,0 +1,41 @@
+# depslib dependency file v1.0
+1328298238 source:c:\projects\testpointerscpp\stdafx.cpp
+	"stdafx.h"
+
+1328363018 c:\projects\testpointerscpp\stdafx.h
+	<vector>
+	<memory>
+	<cstring>
+	<string>
+	<ctime>
+	<iostream>
+	<iomanip>
+	<functional>
+	<algorithm>
+	<tuple>
+
+1328363248 source:c:\projects\testpointerscpp\testpointerscpp.cpp
+	"stdafx.h"
+	<boost\pool\pool.hpp>
+	<boost\pool\singleton_pool.hpp>
+	<loki\smartptr.h>
+	<stlsoft\containers\pod_vector.hpp>
+	<boost/range/adaptor/filtered.hpp>
+	<boost/range/numeric.hpp>
+	<boost/range/adaptor/transformed.hpp>
+	<boost/range/adaptor/indirected.hpp>
+	<boost/chrono/process_cpu_clocks.hpp>
+	<boost/chrono/time_point.hpp>
+	<boost/chrono/chrono_io.hpp>
+
+1178621320 source:c:\projects\testpointerscpp\smallobj.cpp
+	<loki/SmallObj.h>
+	<cassert>
+	<climits>
+	<vector>
+	<bitset>
+	<iostream>
+
+1161115542 source:c:\projects\testpointerscpp\singleton.cpp
+	<loki/Singleton.h>
+

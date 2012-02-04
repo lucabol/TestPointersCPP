@@ -8,8 +8,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #pragma warning (disable: 4345)
 
-#include "targetver.h"
-
 #include <vector>
 #include <memory>
 #include <cstring>

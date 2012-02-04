@@ -12,9 +12,6 @@
 #include <boost/chrono/time_point.hpp>
 #include <boost/chrono/chrono_io.hpp>
 
-// This doesn't get defined when compiling Loki to a dll ....
-Loki::Private::TrackerArray* Loki::Private::pTrackerArray = 0;
-
 using namespace std;
 using stlsoft::pod_vector;
 using namespace boost::chrono;
@@ -91,7 +88,7 @@ int accumulate_filter(const Range& r) {
 	return boost::accumulate(
 		r | filtered(filter_f) | transformed(to_int()),
 		0,
-		plus<int>()); 
+		plus<int>());
 }
 
 void record_init(Record& r, int i) {
@@ -116,7 +113,7 @@ int normal() {
         v.push_back(r);
     }
 
-	return accumulate_filter(v);  
+	return accumulate_filter(v);
 }
 
 template<int size>
@@ -129,7 +126,7 @@ int podVector() {
         v.push_back(r);
     }
 
-	return accumulate_filter(v);  
+	return accumulate_filter(v);
 }
 
 typedef enum {Normal, Boost, Make, LokiPtr} WhichOne;
@@ -220,7 +217,7 @@ int main()
 	   durations.push_back(make_tuple(doTest([]() { return boostallocator(Boost);}), "Pooled allocator"));
 
 	   //sort(durations.begin(), durations.end(), [](ResultType r1, ResultType r2) { return (get<0>(r1) < get<0>(r2));});
-	   for_each(durations.begin(), durations.end(), [](ResultType r) { cout /*<< setw(40) << get<1>(r) << ": " */<< get<0>(r) << endl;}); 
+	   for_each(durations.begin(), durations.end(), [](ResultType r) { cout /*<< setw(40) << get<1>(r) << ": " */<< get<0>(r) << endl;});
        return 0;
 }
 
