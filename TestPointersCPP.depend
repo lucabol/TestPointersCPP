@@ -2,7 +2,7 @@
 1328298238 source:c:\projects\testpointerscpp\stdafx.cpp
 	"stdafx.h"
 
-1328363018 c:\projects\testpointerscpp\stdafx.h
+1328364615 c:\projects\testpointerscpp\stdafx.h
 	<vector>
 	<memory>
 	<cstring>
@@ -14,7 +14,7 @@
 	<algorithm>
 	<tuple>
 
-1328363248 source:c:\projects\testpointerscpp\testpointerscpp.cpp
+1328364682 source:c:\projects\testpointerscpp\testpointerscpp.cpp
 	"stdafx.h"
 	<boost\pool\pool.hpp>
 	<boost\pool\singleton_pool.hpp>
@@ -28,7 +28,8 @@
 	<boost/chrono/time_point.hpp>
 	<boost/chrono/chrono_io.hpp>
 
-1178621320 source:c:\projects\testpointerscpp\smallobj.cpp
+1328363357 source:c:\projects\testpointerscpp\smallobj.cpp
+	"stdafx.h"
 	<loki/SmallObj.h>
 	<cassert>
 	<climits>
@@ -36,6 +37,7 @@
 	<bitset>
 	<iostream>
 
-1161115542 source:c:\projects\testpointerscpp\singleton.cpp
+1328363357 source:c:\projects\testpointerscpp\singleton.cpp
+	"stdafx.h"
 	<loki/Singleton.h>
 

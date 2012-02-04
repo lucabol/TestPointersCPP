@@ -32,7 +32,12 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
-		<Unit filename="main.cpp" />
+		<Unit filename="Singleton.cpp" />
+		<Unit filename="SmallObj.cpp" />
+		<Unit filename="TestPointersCPP.cpp" />
+		<Unit filename="stdafx.cpp" />
+		<Unit filename="stdafx.h" />
+		<Unit filename="targetver.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

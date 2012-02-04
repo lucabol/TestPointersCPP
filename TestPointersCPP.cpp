@@ -20,7 +20,7 @@ using boost::adaptors::transformed;
 using boost::adaptors::indirected;
 
 const int repetitions = 1000;
-const int bigBlock = 174;
+const int bigBlock = 26;
 const int howMany = 1000;
 const int filterNo = 100;
 
@@ -154,7 +154,7 @@ int pointers(WhichOne which) {
 	return accumulate_filter(v | indirected);
 }
 
-int lokipointers(WhichOne which) {
+int lokipointers(WhichOne) {
     vector<RecordPtr> v;
     for (int i = 0; i < howMany; ++i) {
         RecordPtr r = RecordPtr(new Record());
